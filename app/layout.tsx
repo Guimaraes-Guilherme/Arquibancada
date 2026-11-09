@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "Placares, notícias e regras de Futebol, F1, UFC e Basquete",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "Arquibancada", statusBarStyle: "black-translucent" },
-  icons: { icon: "/icon-192.png", apple: "/icon-192.png" },
+  icons: { icon: "/icon-192.png", apple: "/apple-touch-icon.png" },
 };
 export const viewport: Viewport = { themeColor: "#000000", width: "device-width", initialScale: 1, viewportFit: "cover" };
 

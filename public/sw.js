@@ -34,7 +34,7 @@ self.addEventListener("fetch", (event) => {
     fetch(req)
       .then((res) => {
         const copy = res.clone();
-        caches.open("arq-v1").then((c) => c.put(req, copy)).catch(() => {});
+        caches.open("arq-v2").then((c) => c.put(req, copy)).catch(() => {});
         return res;
       })
       .catch(() => caches.match(req))
