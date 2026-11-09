@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { PushSubscription } from "web-push";
-import { garanteTabelas, limpaAntigos, marca, sql } from "@/lib/db";
+import { garanteTabelas, limpaAntigos, marca, registraExecucao, sql, ultimasExecucoes } from "@/lib/db";
 import { envia, type Msg } from "@/lib/push";
 import { diaBR, hojeBR, jogosNBAHojeOntem, proximosJogosFutebol, temporadaF1, temporadaUFC, TZ, type Jogo } from "@/lib/espn";
 import { ligaPorId, PREFS_PADRAO, type Notifs, type Prefs, type SportId } from "@/lib/sports";
@@ -119,6 +119,11 @@ function resumoDiario(p: Prefs, hoje: Awaited<ReturnType<typeof coletaAvisos>>["
 }
 
 export async function GET(req: NextRequest) {
+  // ?status=1 → mostra quando cada gatilho chamou o cron pela última vez (público, sem dados sensíveis)
+  if (req.nextUrl.searchParams.get("status")) {
+    await garanteTabelas();
+    return NextResponse.json(await ultimasExecucoes());
+  }
   const segredo = process.env.CRON_SECRET;
   const chave = req.nextUrl.searchParams.get("key") ?? req.headers.get("authorization")?.replace("Bearer ", "");
   if (segredo && chave !== segredo) return NextResponse.json({ erro: "não autorizado" }, { status: 401 });
@@ -130,6 +135,8 @@ export async function GET(req: NextRequest) {
   }
 
   await garanteTabelas();
+  const ua = req.headers.get("user-agent") ?? "";
+  await registraExecucao(/cron-job/i.test(ua) ? "cron-job.org" : /curl/i.test(ua) ? "github" : "outro");
   const subs = (await sql()`SELECT endpoint, sub, prefs FROM inscricoes`) as Inscricao[];
   if (!subs.length) return NextResponse.json({ ok: true, inscricoes: 0 });
   for (const s of subs) s.prefs = { ...PREFS_PADRAO, ...s.prefs, notifs: { ...PREFS_PADRAO.notifs, ...(s.prefs?.notifs ?? {}) } };
